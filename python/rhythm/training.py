@@ -3,8 +3,8 @@ import os
 from typing import List, Union
 
 import numpy as np
-from tensorflow.keras import Model
-from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
+from keras import Model
+from keras.callbacks import ModelCheckpoint, EarlyStopping
 
 from rhythm.models import build_cond_mlp_enc, build_cond_mlp_dec, RhythmVAE
 from rhythm.preprocessing import N_DRUMS, calc_conditioning_data, LEN_SEQ
@@ -53,6 +53,7 @@ def train_rhythm_vae(
     cp = ModelCheckpoint(save_path,
                          monitor='val_loss',
                          verbose=1,
+                         save_weights_only=True,
                          save_best_only=True)
     vae.fit(x,
             y,
