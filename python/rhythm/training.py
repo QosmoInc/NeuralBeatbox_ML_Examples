@@ -6,7 +6,8 @@ import numpy as np
 from keras import Model
 from keras.callbacks import ModelCheckpoint, EarlyStopping
 
-from rhythm.models import build_cond_mlp_enc, build_cond_mlp_dec, RhythmVAE
+from rhythm.models_mlp import build_cond_mlp_enc, build_cond_mlp_dec, RhythmVAE
+from rhythm.models_rnn import build_lstm_enc, build_lstm_dec
 from rhythm.preprocessing import N_DRUMS, calc_conditioning_data, LEN_SEQ
 
 logging.basicConfig()
@@ -73,16 +74,29 @@ def rhythm_vae_training_example(training_data_paths: List[str]) -> None:
     epochs = 50
     val_split = 0.10
     dropout = 0.4
-    model_name = f'vae_mlp_cond_nz{n_z}_do{int(dropout * 100)}'
+    # model_name = f'vae_mlp_cond_nz{n_z}_do{int(dropout * 100)}'
+    model_name = f'vae_lstm_nz{n_z}'
     binary_cond_data = False
     use_zscore = True
 
     onset_x, vel_x = load_rhythm_vae_data(training_data_paths)
     cond_data, cond_mean, cond_std = calc_conditioning_data(
         onset_x, binary_only=binary_cond_data, use_zscore=use_zscore)
+    log.info(f"cond_data.shape = {cond_data.shape}")
 
-    enc = build_cond_mlp_enc(len_seq, n_notes, n_z, dropout)
-    dec = build_cond_mlp_dec(len_seq, n_notes, n_z, dropout)
+    # data = np.load("/Users/puntland/local_christhetree/qosmo/NeuralBeatbox_ML_Examples/data/rhythm/combine-001.npz")
+    # cvec = np.load("/Users/puntland/local_christhetree/qosmo/NeuralBeatbox_ML_Examples/data/rhythm/cvec.npz")
+    # cvec = cvec["arr_0"]
+    # ts_onset = data["drum_onset_matrices"]
+    # ts_vel = data["drum_vel_matrices"]
+    # stats = np.sum(cvec, axis=0)
+    # exit()
+
+    # enc = build_cond_mlp_enc(len_seq, n_notes, n_z, dropout)
+    enc = build_lstm_enc(n_z=n_z, n_drums=n_notes, len_seq=len_seq, n_cond=8)
+    # dec = build_cond_mlp_dec(len_seq, n_notes, n_z, dropout)
+    dec = build_lstm_dec(n_z=n_z, n_drums=n_notes, len_seq=len_seq, n_cond=8)
+
     vae = RhythmVAE(enc, dec)
     vae.compile(optimizer='adam')
 
